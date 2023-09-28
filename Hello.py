@@ -14,37 +14,57 @@
 
 import streamlit as st
 from streamlit.logger import get_logger
-
 LOGGER = get_logger(__name__)
+
+import requests
+
+
+def gen_illusion(prompt):
+    
+  url = "https://54285744-illusion-diffusion.gateway.alpha.fal.ai/"
+
+  API_KEY = "key " + st.secrets["API_KEY"]
+
+  PROMPT = f"(masterpiece:1.4), (best quality), (detailed), BREAK {prompt}."
+
+  LOGGER.info(PROMPT)
+
+  payload = {
+      "image_url": "https://storage.googleapis.com/llm-sandbox/Charte_Graphique_TheField_white.jpg",
+      "prompt": PROMPT,
+      "negative_prompt" : "(worst quality, poor details:1.4), lowres, (artist name, signature, watermark:1.4), bad-artist-anime, bad_prompt_version2, bad-hands-5, ng_deepnegative_v1_75t",
+      "guidance_scale": 7.5,
+      "controlnet_conditioning_scale": 1,
+      "control_guidance_start": 0,
+      "control_guidance_end": 1,
+      "seed": 65423178,
+      "scheduler": "Euler",
+      "num_inference_steps": 40
+  }
+  headers = {
+      "Authorization": API_KEY,
+      "Content-Type": "application/json"
+  }
+
+  response = requests.post(url, json=payload, headers=headers)
+  image = response.json()
+  LOGGER.info(image)
+  return image["image"]["url"]
 
 
 def run():
     st.set_page_config(
-        page_title="Hello",
+        page_title="Illusion Diffusion - The field",
         page_icon="👋",
     )
 
-    st.write("# Welcome to Streamlit! 👋")
+    st.write("# Illusion Diffusion - The field")
 
-    st.sidebar.success("Select a demo above.")
+    prompt_input = st.text_input('Prompt', placeholder='A New York city scene with buildings in the distance')
+    result = gen_illusion(prompt_input)
 
-    st.markdown(
-        """
-        Streamlit is an open-source app framework built specifically for
-        Machine Learning and Data Science projects.
-        **👈 Select a demo from the sidebar** to see some examples
-        of what Streamlit can do!
-        ### Want to learn more?
-        - Check out [streamlit.io](https://streamlit.io)
-        - Jump into our [documentation](https://docs.streamlit.io)
-        - Ask a question in our [community
-          forums](https://discuss.streamlit.io)
-        ### See more complex demos
-        - Use a neural net to [analyze the Udacity Self-driving Car Image
-          Dataset](https://github.com/streamlit/demo-self-driving)
-        - Explore a [New York City rideshare dataset](https://github.com/streamlit/demo-uber-nyc-pickups)
-    """
-    )
+    if prompt_input:
+      st.image(result)
 
 
 if __name__ == "__main__":
